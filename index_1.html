@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LeadCapture</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --ink: #0f0f0f;
+    --paper: #faf9f7;
+    --cream: #f2efe8;
+    --accent: #c8502a;
+    --accent-light: #f5ede9;
+    --accent2: #2a6eb5;
+    --muted: #8a8278;
+    --border: #e0dbd1;
+    --card: #ffffff;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --amber: #c87d2a;
+    --green: #2a9463;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: var(--ink);
+  }
+  .setup-box {
+    background: white; border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 440px;
+  }
+  .setup-logo { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 4px; }
+  .setup-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+  .setup-step {
+    background: var(--cream); border-radius: var(--radius-sm);
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .setup-step-num {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 5px;
+  }
+  .setup-step p { font-size: 13px; line-height: 1.6; color: var(--ink); }
+  .setup-step a { color: var(--accent2); }
+  .setup-step code {
+    background: var(--border); border-radius: 4px; padding: 1px 5px;
+    font-size: 12px; font-family: monospace;
+  }
+  .setup-divider { text-align: center; font-size: 12px; color: var(--muted); margin: 18px 0 14px; }
+  .setup-field { margin-bottom: 12px; }
+  .setup-field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .setup-field input {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); outline: none;
+  }
+  .setup-field input:focus { border-color: var(--accent); }
+  .setup-field .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .btn-setup {
+    width: 100%; background: var(--accent); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 6px;
+  }
+  .setup-error { background: #fdf0ee; border: 1.5px solid #f0c4bb; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: #b03a2a; margin-top: 10px; display: none; }
+  .sql-block {
+    background: #1a1a1a; border-radius: var(--radius-sm);
+    padding: 12px 14px; margin: 8px 0 4px;
+    font-family: monospace; font-size: 11px; color: #a8d8a8;
+    line-height: 1.7; overflow-x: auto; white-space: pre;
+  }
+  .copy-sql-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--muted);
+    cursor: pointer; margin-top: 4px;
+  }
+  .copy-sql-btn:active { background: var(--cream); }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    min-height: 100vh; display: none; align-items: center;
+    justify-content: center; padding: 24px; background: var(--ink);
+  }
+  .login-box {
+    background: white; border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 380px;
+  }
+  .login-logo { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+  .login-field { margin-bottom: 13px; }
+  .login-field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .login-field input {
+    width: 100%; padding: 12px 13px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); outline: none;
+    -webkit-appearance: none;
+  }
+  .login-field input:focus { border-color: var(--accent); }
+  .btn-login {
+    width: 100%; background: var(--accent); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 4px;
+  }
+  .btn-login:active { opacity: 0.88; }
+  .login-error { background: #fdf0ee; border: 1.5px solid #f0c4bb; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: #b03a2a; margin-top: 10px; display: none; }
+  .login-loading { text-align: center; font-size: 13px; color: var(--muted); margin-top: 10px; display: none; }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--ink); color: white;
+    padding: 16px 20px 14px; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-brand { display: flex; align-items: baseline; gap: 9px; }
+  .header-brand h1 { font-family: 'DM Serif Display', serif; font-size: 20px; color: white; }
+  .event-badge {
+    font-size: 11px; font-weight: 600; background: var(--accent); color: white;
+    border-radius: 4px; padding: 2px 8px; letter-spacing: 0.4px;
+    text-transform: uppercase; cursor: pointer; white-space: nowrap;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .user-chip {
+    background: rgba(255,255,255,0.12); border-radius: 20px;
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+  }
+  .btn-icon {
+    background: rgba(255,255,255,0.12); border: none; border-radius: 8px;
+    color: white; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 17px;
+  }
+  .btn-icon:active { background: rgba(255,255,255,0.22); }
+
+  /* ── TABS ── */
+  .tabs {
+    background: var(--ink); display: flex; padding: 0 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    background: none; border: none; color: rgba(255,255,255,0.45);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    padding: 10px 14px 12px; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap;
+  }
+  .tab.active { color: white; border-bottom-color: var(--accent); }
+  .tab .count {
+    display: inline-block; background: var(--accent); color: white;
+    border-radius: 10px; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; margin-left: 5px; vertical-align: middle;
+  }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding: 14px 14px 100px; }
+  .view.active { display: block; }
+
+  /* ── SEARCH ── */
+  .search-bar { margin-bottom: 12px; position: relative; }
+  .search-bar .icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 10px 10px 10px 33px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ── LEAD CARDS ── */
+  .leads-list { display: flex; flex-direction: column; gap: 9px; }
+  .lead-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1.5px solid var(--border); padding: 13px 14px 11px;
+    cursor: pointer; transition: border-color 0.12s;
+  }
+  .lead-card:active { border-color: var(--accent); }
+  .photo-bar { border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+  .photo-bar.req { background: #fff8ee; border: 1.5px solid #f5ddb0; color: var(--amber); }
+  .photo-bar.cap { background: #edf7f2; border: 1.5px solid #b0dfc4; color: var(--green); }
+  .lead-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .lead-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DM Serif Display', serif; font-size: 15px; color: white; flex-shrink: 0; }
+  .c1{background:#c8502a} .c2{background:#2a6eb5} .c3{background:#2a9463} .c4{background:#8b52c8} .c5{background:#c87d2a}
+  .lead-info { flex: 1; min-width: 0; }
+  .lead-name { font-family: 'DM Serif Display', serif; font-size: 17px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lead-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .lead-added-by { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .stage-pill { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+  .s0{background:#f0ede8;color:#8a8278} .s1{background:#e8f0f7;color:#2a6eb5}
+  .s2{background:#e8f3ee;color:#2a9463} .s3{background:#f0e8f7;color:#8b52c8}
+  .s4{background:#fff3e0;color:#c87d2a} .s5{background:#e8f7ee;color:#1a7a4a}
+  .lead-notes-preview { font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 24px; right: 18px; background: var(--accent); color: white;
+    border: none; border-radius: 28px; height: 54px; padding: 0 22px;
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(200,80,42,0.42); z-index: 90;
+  }
+  .fab:active { opacity: 0.9; }
+  .fab .plus { font-size: 22px; font-weight: 300; }
+
+  /* ── SHEET ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: flex-end; backdrop-filter: blur(2px); }
+  .overlay.open { display: flex; }
+  .sheet { background: white; width: 100%; max-height: 94vh; border-radius: 20px 20px 0 0; overflow-y: auto; -webkit-overflow-scrolling: touch; animation: slideUp 0.22s ease; }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
+  .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: white; z-index: 10; }
+  .sheet-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+  .sheet-close { background: var(--cream); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .sheet-body { padding: 16px 18px 36px; }
+
+  /* ── FORM ── */
+  .field-group { margin-bottom: 13px; }
+  .field-group label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .field-group input, .field-group textarea, .field-group select {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink);
+    outline: none; -webkit-appearance: none; transition: border-color 0.15s;
+  }
+  .field-group input:focus, .field-group textarea:focus { border-color: var(--accent); }
+  .field-group textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── EXPAND ── */
+  .expand-more-btn {
+    width: 100%; background: var(--cream); border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm); padding: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+    margin-bottom: 2px; transition: all 0.15s;
+  }
+  .expand-more-btn:active { border-color: var(--accent); color: var(--accent); }
+  .expand-more-btn .chevron { font-size: 16px; display: inline-block; transition: transform 0.22s; }
+  .expand-more-btn.open .chevron { transform: rotate(180deg); }
+  .details-section { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.35s ease, opacity 0.25s ease; }
+  .details-section.open { max-height: 9999px; opacity: 1; }
+
+  /* ── SECTION LABEL ── */
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 18px 0 11px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── TOGGLES ── */
+  .toggle-field { display: flex; align-items: center; justify-content: space-between; border-radius: var(--radius-sm); padding: 11px 13px; margin-bottom: 10px; cursor: pointer; border: 1.5px solid var(--border); }
+  .toggle-field.photo-req { background: #fffaf3; border-color: #f5ddb0; }
+  .toggle-field.photo-cap { background: #f3fbf6; border-color: #b0dfc4; }
+  .toggle-text { flex: 1; }
+  .toggle-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .toggle-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .toggle-switch { width: 42px; height: 24px; background: var(--border); border-radius: 12px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle-switch.on-amber { background: var(--amber); }
+  .toggle-switch.on-green { background: var(--green); }
+  .toggle-switch.on-amber::after, .toggle-switch.on-green::after { left: 21px; }
+
+  /* ── STAGE SELECTOR ── */
+  .stage-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 14px; }
+  .stage-option { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 6px; text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; color: var(--muted); background: white; transition: all 0.12s; }
+  .sel-0{border-color:#8a8278;background:#f0ede8;color:#8a8278}
+  .sel-1{border-color:#2a6eb5;background:#e8f0f7;color:#2a6eb5}
+  .sel-2{border-color:#2a9463;background:#e8f3ee;color:#2a9463}
+  .sel-3{border-color:#8b52c8;background:#f0e8f7;color:#8b52c8}
+  .sel-4{border-color:#c87d2a;background:#fff3e0;color:#c87d2a}
+  .sel-5{border-color:#1a7a4a;background:#e8f7ee;color:#1a7a4a}
+
+  /* ── BUTTONS ── */
+  .btn-primary { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; width: 100%; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .btn-primary:active { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-danger { background: none; color: #c0392b; border: 1.5px solid #e8c8c5; border-radius: var(--radius-sm); padding: 12px; width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+
+  /* ── LOG ── */
+  .log-list { margin-bottom: 13px; }
+  .log-entry { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+  .log-text { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .log-date { font-size: 11px; color: var(--muted); }
+  .log-author { font-size: 10px; color: var(--muted); font-style: italic; }
+
+  /* ── PIPELINE ── */
+  .pipeline-column { margin-bottom: 22px; }
+  .pipeline-col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; padding: 0 2px; }
+  .pipeline-col-title { font-size: 11px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--muted); }
+  .pipeline-count { background: var(--border); border-radius: 10px; font-size: 10px; font-weight: 700; color: var(--muted); padding: 1px 7px; }
+  .pipeline-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; margin-bottom: 7px; cursor: pointer; }
+  .pipeline-card:active { border-color: var(--accent); }
+  .pipeline-card-name { font-family: 'DM Serif Display', serif; font-size: 16px; margin-bottom: 2px; }
+  .pipeline-card-meta { font-size: 12px; color: var(--muted); }
+  .pipeline-card-badges { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+  .mini-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .mb-req { background: #fff8ee; color: var(--amber); }
+  .mb-cap { background: #edf7f2; color: var(--green); }
+
+  /* ── PHOTO LIST ── */
+  .photo-list-item { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 9px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  .photo-list-item:active { border-color: var(--accent); }
+  .photo-list-item.captured { border-color: #b0dfc4; background: #f8fdf9; }
+  .photo-item-info { flex: 1; min-width: 0; }
+  .photo-item-name { font-family: 'DM Serif Display', serif; font-size: 17px; }
+  .photo-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .photo-status-badge { font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
+  .psb-needed { background: #fff8ee; color: var(--amber); }
+  .psb-got { background: #edf7f2; color: var(--green); }
+
+  /* ── EMPTY ── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 44px; margin-bottom: 12px; }
+  .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ── EVENT MODAL ── */
+  .center-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
+  .center-modal.open { display: flex; }
+  .center-modal-box { background: white; border-radius: var(--radius); padding: 22px 20px; width: 100%; max-width: 380px; }
+  .center-modal-box h3 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 14px; }
+
+  /* ── LOADING SPINNER ── */
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SYNC INDICATOR ── */
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 5px; }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 1s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; border-radius: 20px; padding: 10px 20px; font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SETUP SCREEN (shown if no config)
+══════════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo">LeadCapture</div>
+    <div class="setup-sub">One-time setup — follow these steps to connect your Supabase database. You only do this once.</div>
+
+    <div class="setup-step">
+      <div class="setup-step-num">Step 1</div>
+      <p>Go to <a href="https://supabase.com" target="_blank">supabase.com</a> and create a free account. Then click <strong>New Project</strong> and give it a name like <code>leadcapture</code>. Wait for it to finish provisioning (~1 min).</p>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-step-num">Step 2 — Create the database tables</div>
+      <p>In your Supabase project, go to <strong>SQL Editor</strong> and run this query:</p>
+      <div class="sql-block" id="sql-block">-- Create leads table
+CREATE TABLE leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  company TEXT,
+  title TEXT,
+  notes TEXT,
+  linkedin TEXT,
+  email TEXT,
+  phone TEXT,
+  challenges TEXT,
+  opportunities TEXT,
+  photo_req BOOLEAN DEFAULT false,
+  photo_cap BOOLEAN DEFAULT false,
+  stage INTEGER DEFAULT 0,
+  event TEXT,
+  added_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Create activity log table
+CREATE TABLE lead_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  author TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_log ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users full access
+CREATE POLICY "Authenticated users can do everything"
+  ON leads FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated users can do everything"
+  ON lead_log FOR ALL TO authenticated USING (true) WITH CHECK (true);</div>
+      <button class="copy-sql-btn" onclick="copySQL()">Copy SQL</button>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-step-num">Step 3 — Add your team's logins</div>
+      <p>In Supabase go to <strong>Authentication → Users → Invite user</strong>. Add an email and password for Bree and one for Pinaki. They'll use these to log in.</p>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-step-num">Step 4 — Paste your project keys below</div>
+      <p>In Supabase go to <strong>Project Settings → API</strong>. Copy the <strong>Project URL</strong> and the <strong>anon / public</strong> key.</p>
+    </div>
+
+    <div class="setup-divider">Paste your keys here</div>
+
+    <div class="setup-field">
+      <label>Supabase Project URL</label>
+      <input type="url" id="setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="setup-field">
+      <label>Supabase Anon Key</label>
+      <input type="text" id="setup-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="hint">This is the public anon key — it's safe to use in the browser.</div>
+    </div>
+
+    <button class="btn-setup" onclick="saveConfig()">Save &amp; Continue →</button>
+    <div class="setup-error" id="setup-error"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">LeadCapture</div>
+    <div class="login-sub">Sign in to access your team's leads.</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()" id="login-btn">Sign In</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-loading" id="login-loading">Signing in…</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app">
+  <div class="header">
+    <div class="header-brand">
+      <h1>LeadCapture</h1>
+      <span class="event-badge" onclick="openEventModal()" id="event-badge-label">Set Event ›</span>
+    </div>
+    <div class="header-actions">
+      <span class="user-chip" id="user-chip">…</span>
+      <button class="btn-icon" onclick="exportCSV()" title="Export CSV">⬇</button>
+      <button class="btn-icon" onclick="doLogout()" title="Sign out">⎋</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('capture')" id="tab-capture">Leads <span class="count" id="count-capture">0</span></button>
+    <button class="tab" onclick="switchTab('pipeline')" id="tab-pipeline">Pipeline <span class="count" id="count-pipeline">0</span></button>
+    <button class="tab" onclick="switchTab('photos')" id="tab-photos">📸 Photo List <span class="count" id="count-photos">0</span></button>
+  </div>
+
+  <!-- LEADS -->
+  <div class="view active" id="view-capture">
+    <div class="search-bar">
+      <span class="icon">🔍</span>
+      <input class="search-input" type="search" placeholder="Search leads…" id="search-input" oninput="renderLeads()">
+    </div>
+    <div class="leads-list" id="leads-list"></div>
+    <div class="empty-state" id="empty-capture" style="display:none">
+      <div class="icon">🤝</div>
+      <h3>No leads yet</h3>
+      <p>Tap the button below to capture your first connection.</p>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="view" id="view-pipeline">
+    <div id="pipeline-board"></div>
+    <div class="empty-state" id="empty-pipeline" style="display:none">
+      <div class="icon">📊</div>
+      <h3>Pipeline is empty</h3>
+      <p>Add leads and set their follow-up stage to see them here.</p>
+    </div>
+  </div>
+
+  <!-- PHOTO LIST -->
+  <div class="view" id="view-photos">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Leads flagged for a photo or video. Tap any card to mark the shot as captured.</p>
+    <div id="photo-list"></div>
+    <div class="empty-state" id="empty-photos" style="display:none">
+      <div class="icon">📷</div>
+      <h3>No photo requests</h3>
+      <p>When Pinaki flags a lead for a photo, it'll appear here.</p>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openNewLead()">
+    <span class="plus">+</span> New Lead
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- LEAD SHEET -->
+<div class="overlay" id="lead-overlay" onclick="handleOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="sheet-title">New Lead</span>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-group">
+        <label>Name *</label>
+        <input type="text" id="f-name" placeholder="Full name" autocomplete="off" autocorrect="off" autocapitalize="words">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Company</label>
+          <input type="text" id="f-company" placeholder="Organization" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label>Job Title</label>
+          <input type="text" id="f-title" placeholder="Role" autocomplete="off">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Quick notes while fresh…"></textarea>
+      </div>
+
+      <button class="expand-more-btn" id="expand-btn" onclick="toggleDetails()">
+        <span id="expand-label">Fill in more details</span>
+        <span class="chevron">⌄</span>
+      </button>
+
+      <div class="details-section" id="details-section">
+        <div class="section-label">Contact Details</div>
+        <div class="field-group">
+          <label>LinkedIn URL</label>
+          <input type="url" id="f-linkedin" placeholder="linkedin.com/in/…" autocomplete="off">
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Email</label>
+            <input type="email" id="f-email" placeholder="email@…" autocomplete="off">
+          </div>
+          <div class="field-group">
+            <label>Phone</label>
+            <input type="tel" id="f-phone" placeholder="+1…" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="section-label">Opportunity</div>
+        <div class="field-group">
+          <label>Challenges / Pain Points</label>
+          <textarea id="f-challenges" placeholder="What are they struggling with?"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Opportunities / Services to Pitch</label>
+          <textarea id="f-opportunities" placeholder="What can we help them with?"></textarea>
+        </div>
+
+        <div class="section-label">Photo / Video</div>
+        <div class="toggle-field photo-req" onclick="togglePhotoReq()">
+          <div class="toggle-text">
+            <div class="toggle-label">📸 Request photo/video</div>
+            <div class="toggle-sub">Flag so Bree knows to get a shot at the event</div>
+          </div>
+          <div class="toggle-switch" id="toggle-req"></div>
+        </div>
+        <div class="toggle-field photo-cap" onclick="togglePhotoCap()">
+          <div class="toggle-text">
+            <div class="toggle-label">✅ Photo/video captured</div>
+            <div class="toggle-sub">Bree got the shot — strong follow-up hook ready</div>
+          </div>
+          <div class="toggle-switch" id="toggle-cap"></div>
+        </div>
+
+        <div class="section-label">Follow-Up Stage</div>
+        <div class="stage-selector" id="stage-selector"></div>
+
+        <div class="section-label">Reach Out Log</div>
+        <div class="log-list" id="log-list"></div>
+        <div class="field-group">
+          <label>Add Activity Note</label>
+          <input type="text" id="f-log-entry" placeholder="e.g. Sent intro email, booked call…" autocomplete="off">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveLead()" id="save-btn">Save Lead</button>
+      <button class="btn-danger" id="delete-btn" onclick="deleteLead()" style="display:none">Delete Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="center-modal" id="event-modal">
+  <div class="center-modal-box">
+    <h3>Set Current Event</h3>
+    <div class="field-group">
+      <label>Event Name</label>
+      <input type="text" id="event-name-input" placeholder="e.g. SXSW 2025" autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="saveEvent()" style="margin-top:4px">Save</button>
+    <button onclick="closeEventModal()" style="display:block;width:100%;margin-top:8px;padding:11px;background:none;border:none;font-size:14px;cursor:pointer;color:var(--muted);font-family:inherit">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// CONFIG & SUPABASE INIT
+// ══════════════════════════════════════
+const STAGES       = ['Not Contacted','Email Sent','LinkedIn Connected','Meeting Scheduled','Proposal Sent','Closed / Won'];
+const STAGES_SHORT = ['Not Contacted','Email Sent','LinkedIn','Meeting Set','Proposal','Closed ✓'];
+
+let supabase = null;
+let currentUser = null;
+let leads = [];
+let currentEditId = null;
+let currentPhotoReq = false, currentPhotoCap = false;
+let currentStage = 0, activeTab = 'capture', detailsOpen = false;
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem('lc_config') || 'null'); } catch(e) { return null; }
+}
+
+function initSupabase(url, key) {
+  const { createClient } = window.supabase;
+  supabase = createClient(url, key);
+}
+
+// ── STARTUP ──
+async function startup() {
+  const config = getConfig();
+  if (!config) {
+    document.getElementById('setup-screen').style.display = 'flex';
+    return;
+  }
+  initSupabase(config.url, config.key);
+  document.getElementById('setup-screen').style.display = 'none';
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    showApp();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+}
+
+// ══════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════
+async function saveConfig() {
+  const url = document.getElementById('setup-url').value.trim();
+  const key = document.getElementById('setup-key').value.trim();
+  const errEl = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+
+  if (!url || !key) { errEl.textContent = 'Please fill in both fields.'; errEl.style.display = 'block'; return; }
+  if (!url.includes('supabase.co')) { errEl.textContent = 'That doesn\'t look like a Supabase URL.'; errEl.style.display = 'block'; return; }
+
+  // test the connection
+  try {
+    const { createClient } = window.supabase;
+    const client = createClient(url, key);
+    const { error } = await client.from('leads').select('id').limit(1);
+    if (error && error.code !== 'PGRST116' && error.code !== '42P01') throw error;
+  } catch(e) {
+    errEl.textContent = 'Could not connect. Double-check your URL and key, and make sure you ran the SQL setup.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  localStorage.setItem('lc_config', JSON.stringify({ url, key }));
+  location.reload();
+}
+
+function copySQL() {
+  const sql = document.getElementById('sql-block').textContent;
+  const btn = document.querySelector('.copy-sql-btn');
+
+  const finish = () => { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy SQL', 2000); };
+
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = sql;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); finish(); } catch(e) { btn.textContent = 'Select text above manually'; }
+    document.body.removeChild(ta);
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(sql).then(finish).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = 'Incorrect email or password.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+    return;
+  }
+  currentUser = data.user;
+  showApp();
+}
+
+// Allow Enter key on login
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-password')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+});
+
+async function doLogout() {
+  await supabase.auth.signOut();
+  currentUser = null;
+  leads = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const name = currentUser.email.split('@')[0];
+  document.getElementById('user-chip').textContent = name;
+
+  const evt = localStorage.getItem('lc_event');
+  if (evt) document.getElementById('event-badge-label').textContent = evt + ' ›';
+
+  loadLeads();
+}
+
+// ══════════════════════════════════════
+// DATA — SUPABASE CALLS
+// ══════════════════════════════════════
+async function loadLeads() {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*, lead_log(*)')
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('Error loading leads'); return; }
+  leads = (data || []).map(l => ({ ...l, log: l.lead_log || [] }));
+  renderCurrent();
+  updateCounts();
+}
+
+async function insertLead(lead) {
+  const { data, error } = await supabase
+    .from('leads')
+    .insert([{
+      name: lead.name, company: lead.company, title: lead.title,
+      notes: lead.notes, linkedin: lead.linkedin, email: lead.email,
+      phone: lead.phone, challenges: lead.challenges,
+      opportunities: lead.opportunities,
+      photo_req: lead.photoReq, photo_cap: lead.photoCap,
+      stage: lead.stage, event: lead.event,
+      added_by: currentUser.email.split('@')[0],
+    }])
+    .select('*, lead_log(*)')
+    .single();
+  if (error) throw error;
+  return { ...data, log: data.lead_log || [] };
+}
+
+async function updateLead(id, lead) {
+  const { error } = await supabase
+    .from('leads')
+    .update({
+      name: lead.name, company: lead.company, title: lead.title,
+      notes: lead.notes, linkedin: lead.linkedin, email: lead.email,
+      phone: lead.phone, challenges: lead.challenges,
+      opportunities: lead.opportunities,
+      photo_req: lead.photoReq, photo_cap: lead.photoCap,
+      stage: lead.stage,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+async function insertLogEntry(leadId, text) {
+  const { data, error } = await supabase
+    .from('lead_log')
+    .insert([{ lead_id: leadId, text, author: currentUser.email.split('@')[0] }])
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteLeadById(id) {
+  const { error } = await supabase.from('leads').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ══════════════════════════════════════
+// UI — TABS & RENDERING
+// ══════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  ['capture','pipeline','photos'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('view-' + t).classList.toggle('active', t === tab);
+  });
+  renderCurrent();
+}
+function renderCurrent() {
+  if (activeTab === 'pipeline') renderPipeline();
+  else if (activeTab === 'photos') renderPhotoList();
+  else renderLeads();
+}
+function updateCounts() {
+  document.getElementById('count-capture').textContent = leads.length;
+  document.getElementById('count-pipeline').textContent = leads.filter(l => (l.stage||0) > 0).length;
+  document.getElementById('count-photos').textContent = leads.filter(l => l.photo_req && !l.photo_cap).length;
+}
+
+function initials(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function colorClass(n) { return 'c' + (((n||'').split('').reduce((a,c) => a+c.charCodeAt(0), 0) % 5) + 1); }
+function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('en-US', {month:'short',day:'numeric'}) : ''; }
+
+function renderLeads() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  const list = document.getElementById('leads-list');
+  const empty = document.getElementById('empty-capture');
+  const filtered = leads.filter(l =>
+    !q || ['name','company','title','notes'].some(k => (l[k]||'').toLowerCase().includes(q))
+  );
+  if (!filtered.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(l => `
+    <div class="lead-card" onclick="openEditLead('${l.id}')">
+      ${l.photo_req && !l.photo_cap ? `<div class="photo-bar req">📸 Photo requested</div>` : ''}
+      ${l.photo_cap ? `<div class="photo-bar cap">✅ Photo captured — great follow-up hook!</div>` : ''}
+      <div class="lead-card-header">
+        <div class="lead-avatar ${colorClass(l.name)}">${initials(l.name)}</div>
+        <div class="lead-info">
+          <div class="lead-name">${l.name}</div>
+          <div class="lead-meta">${[l.title,l.company].filter(Boolean).join(' · ')||'&nbsp;'}</div>
+          ${l.added_by ? `<div class="lead-added-by">Added by ${l.added_by}</div>` : ''}
+        </div>
+        <div class="stage-pill s${l.stage||0}">${STAGES_SHORT[l.stage||0]}</div>
+      </div>
+      ${l.notes ? `<div class="lead-notes-preview">${l.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderPipeline() {
+  const board = document.getElementById('pipeline-board');
+  const empty = document.getElementById('empty-pipeline');
+  if (!leads.length) { board.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  let html = '';
+  STAGES.forEach((stage, idx) => {
+    const col = leads.filter(l => (l.stage||0) === idx);
+    if (!col.length) return;
+    html += `
+      <div class="pipeline-column">
+        <div class="pipeline-col-header">
+          <span class="pipeline-col-title">${stage}</span>
+          <span class="pipeline-count">${col.length}</span>
+        </div>
+        ${col.map(l => `
+          <div class="pipeline-card" onclick="openEditLead('${l.id}')">
+            <div class="pipeline-card-name">${l.name}</div>
+            <div class="pipeline-card-meta">${[l.title,l.company].filter(Boolean).join(' · ')}</div>
+            <div class="pipeline-card-badges">
+              ${l.photo_req && !l.photo_cap ? '<span class="mini-badge mb-req">📸 Photo needed</span>' : ''}
+              ${l.photo_cap ? '<span class="mini-badge mb-cap">✅ Photo ready</span>' : ''}
+              ${l.log&&l.log.length ? `<span style="font-size:10px;color:var(--muted)">Last: ${fmtDate(l.log[l.log.length-1].created_at)}</span>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  });
+  board.innerHTML = html;
+}
+
+function renderPhotoList() {
+  const wrap = document.getElementById('photo-list');
+  const empty = document.getElementById('empty-photos');
+  const needed = leads.filter(l => l.photo_req);
+  if (!needed.length) { wrap.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  wrap.innerHTML = needed.map(l => `
+    <div class="photo-list-item${l.photo_cap ? ' captured' : ''}" onclick="openEditLead('${l.id}')">
+      <div class="lead-avatar ${colorClass(l.name)}" style="width:42px;height:42px;font-size:16px;">${initials(l.name)}</div>
+      <div class="photo-item-info">
+        <div class="photo-item-name">${l.name}</div>
+        <div class="photo-item-meta">${[l.title,l.company].filter(Boolean).join(' · ')||'Tap to add details'}</div>
+      </div>
+      <div class="photo-status-badge ${l.photo_cap ? 'psb-got' : 'psb-needed'}">
+        ${l.photo_cap ? '✅ Got it' : '📸 Needed'}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════
+// SHEET — OPEN / CLOSE
+// ══════════════════════════════════════
+function renderStageSelector() {
+  document.getElementById('stage-selector').innerHTML = STAGES.map((s,i) => `
+    <div class="stage-option${i===currentStage?' sel-'+i:''}" onclick="setStage(${i})">${s}</div>
+  `).join('');
+}
+function setStage(i) { currentStage = i; renderStageSelector(); }
+function togglePhotoReq() {
+  currentPhotoReq = !currentPhotoReq;
+  document.getElementById('toggle-req').className = 'toggle-switch' + (currentPhotoReq ? ' on-amber' : '');
+}
+function togglePhotoCap() {
+  currentPhotoCap = !currentPhotoCap;
+  document.getElementById('toggle-cap').className = 'toggle-switch' + (currentPhotoCap ? ' on-green' : '');
+}
+function toggleDetails() {
+  detailsOpen = !detailsOpen;
+  document.getElementById('details-section').classList.toggle('open', detailsOpen);
+  document.getElementById('expand-btn').classList.toggle('open', detailsOpen);
+  document.getElementById('expand-label').textContent = detailsOpen ? 'Hide details' : 'Fill in more details';
+}
+function openDetails() {
+  detailsOpen = true;
+  document.getElementById('details-section').classList.add('open');
+  document.getElementById('expand-btn').classList.add('open');
+  document.getElementById('expand-label').textContent = 'Hide details';
+}
+function closeDetails() {
+  detailsOpen = false;
+  document.getElementById('details-section').classList.remove('open');
+  document.getElementById('expand-btn').classList.remove('open');
+  document.getElementById('expand-label').textContent = 'Fill in more details';
+}
+
+function openNewLead() {
+  currentEditId = null; currentPhotoReq = false; currentPhotoCap = false; currentStage = 0;
+  closeDetails();
+  document.getElementById('sheet-title').textContent = 'New Lead';
+  document.getElementById('delete-btn').style.display = 'none';
+  ['name','company','title','notes','linkedin','email','phone','challenges','opportunities','log-entry']
+    .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value = ''; });
+  document.getElementById('toggle-req').className = 'toggle-switch';
+  document.getElementById('toggle-cap').className = 'toggle-switch';
+  document.getElementById('log-list').innerHTML = '';
+  renderStageSelector();
+  document.getElementById('lead-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 350);
+}
+
+function openEditLead(id) {
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  currentEditId = id; currentPhotoReq = !!l.photo_req;
+  currentPhotoCap = !!l.photo_cap; currentStage = l.stage || 0;
+
+  document.getElementById('sheet-title').textContent = 'Edit Lead';
+  document.getElementById('delete-btn').style.display = 'block';
+  document.getElementById('f-name').value = l.name||'';
+  document.getElementById('f-company').value = l.company||'';
+  document.getElementById('f-title').value = l.title||'';
+  document.getElementById('f-notes').value = l.notes||'';
+  document.getElementById('f-linkedin').value = l.linkedin||'';
+  document.getElementById('f-email').value = l.email||'';
+  document.getElementById('f-phone').value = l.phone||'';
+  document.getElementById('f-challenges').value = l.challenges||'';
+  document.getElementById('f-opportunities').value = l.opportunities||'';
+  document.getElementById('f-log-entry').value = '';
+  document.getElementById('toggle-req').className = 'toggle-switch' + (currentPhotoReq ? ' on-amber' : '');
+  document.getElementById('toggle-cap').className = 'toggle-switch' + (currentPhotoCap ? ' on-green' : '');
+
+  document.getElementById('log-list').innerHTML = (l.log||[])
+    .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
+    .map(e => `
+      <div class="log-entry">
+        <div class="log-dot"></div>
+        <div>
+          <div class="log-text">${e.text}</div>
+          <div class="log-date">${fmtDate(e.created_at)}${e.author ? ` · <span class="log-author">${e.author}</span>` : ''}</div>
+        </div>
+      </div>`).join('');
+
+  renderStageSelector();
+  const hasDetails = l.linkedin||l.email||l.phone||l.challenges||l.opportunities
+    ||l.photo_req||l.photo_cap||(l.log&&l.log.length)||(l.stage>0);
+  if (hasDetails) openDetails(); else closeDetails();
+  document.getElementById('lead-overlay').classList.add('open');
+}
+
+function closeSheet() { document.getElementById('lead-overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target.id === 'lead-overlay') closeSheet(); }
+
+// ══════════════════════════════════════
+// SAVE / DELETE
+// ══════════════════════════════════════
+async function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { showToast('Please enter a name'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving…';
+
+  const logEntry = document.getElementById('f-log-entry').value.trim();
+  const event = localStorage.getItem('lc_event') || '';
+
+  const payload = {
+    name,
+    company: document.getElementById('f-company').value.trim(),
+    title: document.getElementById('f-title').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    linkedin: document.getElementById('f-linkedin').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    challenges: document.getElementById('f-challenges').value.trim(),
+    opportunities: document.getElementById('f-opportunities').value.trim(),
+    photoReq: currentPhotoReq, photoCap: currentPhotoCap,
+    stage: currentStage, event,
+  };
+
+  try {
+    if (currentEditId) {
+      await updateLead(currentEditId, payload);
+      if (logEntry) {
+        const entry = await insertLogEntry(currentEditId, logEntry);
+        const lead = leads.find(l => l.id === currentEditId);
+        if (lead) { lead.log = lead.log || []; lead.log.push(entry); }
+      }
+      const lead = leads.find(l => l.id === currentEditId);
+      if (lead) Object.assign(lead, {
+        name: payload.name, company: payload.company, title: payload.title,
+        notes: payload.notes, linkedin: payload.linkedin, email: payload.email,
+        phone: payload.phone, challenges: payload.challenges,
+        opportunities: payload.opportunities,
+        photo_req: payload.photoReq, photo_cap: payload.photoCap,
+        stage: payload.stage,
+      });
+      showToast('Lead updated ✓');
+    } else {
+      const newLead = await insertLead(payload);
+      if (logEntry) {
+        const entry = await insertLogEntry(newLead.id, logEntry);
+        newLead.log = [entry];
+      }
+      leads.unshift(newLead);
+      showToast('Lead captured ✓');
+    }
+    closeSheet();
+    renderCurrent();
+    updateCounts();
+  } catch(e) {
+    showToast('Error saving — check your connection');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Lead';
+}
+
+async function deleteLead() {
+  if (!confirm('Delete this lead? This cannot be undone.')) return;
+  try {
+    await deleteLeadById(currentEditId);
+    leads = leads.filter(l => l.id !== currentEditId);
+    closeSheet(); renderLeads(); updateCounts();
+    showToast('Lead deleted');
+  } catch(e) {
+    showToast('Error deleting lead');
+  }
+}
+
+// ══════════════════════════════════════
+// EVENT NAME
+// ══════════════════════════════════════
+function openEventModal() {
+  document.getElementById('event-name-input').value = localStorage.getItem('lc_event') || '';
+  document.getElementById('event-modal').classList.add('open');
+  setTimeout(() => document.getElementById('event-name-input').focus(), 200);
+}
+function saveEvent() {
+  const name = document.getElementById('event-name-input').value.trim();
+  if (name) { localStorage.setItem('lc_event', name); document.getElementById('event-badge-label').textContent = name + ' ›'; }
+  closeEventModal();
+}
+function closeEventModal() { document.getElementById('event-modal').classList.remove('open'); }
+
+// ══════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════
+function exportCSV() {
+  if (!leads.length) { showToast('No leads to export'); return; }
+  const cols = ['Name','Company','Title','Email','Phone','LinkedIn','Notes','Challenges','Opportunities','Photo Requested','Photo Captured','Stage','Event','Added By','Created','Log'];
+  const rows = leads.map(l => [
+    l.name, l.company, l.title, l.email, l.phone, l.linkedin,
+    l.notes, l.challenges, l.opportunities,
+    l.photo_req?'Yes':'No', l.photo_cap?'Yes':'No',
+    STAGES[l.stage||0], l.event||'', l.added_by||'',
+    l.created_at ? new Date(l.created_at).toLocaleDateString() : '',
+    (l.log||[]).map(e=>e.text).join(' | ')
+  ].map(v => '"'+(v||'').replace(/"/g,'""')+'"'));
+  const csv = [cols.join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'leads-'+(localStorage.getItem('lc_event')||'export')+'.csv';
+  a.click();
+  showToast('CSV exported ✓');
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── BOOT ──
+startup();
+</script>
+</body>
+</html>
