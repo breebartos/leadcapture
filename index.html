@@ -107,6 +107,8 @@
   .header-save-btn { background: var(--lw-pink); color: white; border: none; border-radius: 20px; padding: 7px 18px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.12s; }
   .header-save-btn:active { background: #c41f63; }
   .header-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .delete-icon-btn { background: none; border: none; font-size: 16px; cursor: pointer; opacity: 0.35; padding: 2px 4px; border-radius: 6px; transition: opacity 0.15s; }
+  .delete-icon-btn:hover, .delete-icon-btn:active { opacity: 0.8; }
   .sheet-close { background: var(--cream); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); }
   .sheet-body { padding: 16px 18px 36px; }
 
@@ -275,6 +277,30 @@
   .assign-popover-name:hover { background: var(--cream); }
   .assign-popover-name.current { background: #fde8f2; color: var(--lw-pink); font-weight: 700; }
   .assign-popover-name.unassign { color: var(--muted); font-style: italic; }
+
+  /* FLAGS */
+  .flags-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .flag-row { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; cursor: pointer; transition: all 0.12s; }
+  .flag-row.active-podcast  { border-color: #9b59b6; background: #f8f0ff; }
+  .flag-row.active-partner  { border-color: var(--lw-blue); background: #e6f6fc; }
+  .flag-row.active-talent   { border-color: #e67e22; background: #fff4e6; }
+  .flag-toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .flag-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .flag-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .flag-toggle { width: 36px; height: 22px; background: var(--border); border-radius: 11px; transition: background 0.2s; flex-shrink: 0; }
+  .flag-row.active-podcast .flag-toggle { background: #9b59b6; }
+  .flag-row.active-partner .flag-toggle { background: var(--lw-blue); }
+  .flag-row.active-talent  .flag-toggle { background: #e67e22; }
+  .flag-topic { margin-top: 10px; display: none; }
+  .flag-topic.show { display: block; }
+  .flag-topic input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); outline: none; box-sizing: border-box; }
+  .flag-topic.podcast-topic input:focus { border-color: #9b59b6; }
+  .flag-topic.partner-topic input:focus { border-color: var(--lw-blue); }
+  .flag-topic.talent-topic  input:focus { border-color: #e67e22; }
+  .flag-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .fb-podcast { background: #f8f0ff; color: #9b59b6; }
+  .fb-partner { background: #e6f6fc; color: var(--lw-blue); }
+  .fb-talent  { background: #fff4e6; color: #e67e22; }
 
   /* PHOTO STATUS */
   .photo-status-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -462,7 +488,10 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <span class="sheet-title" id="sheet-title">New Lead</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="sheet-title" id="sheet-title">New Lead</span>
+        <button class="delete-icon-btn" id="delete-btn" onclick="deleteLead()" style="display:none" title="Delete lead">🗑</button>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="header-save-btn" onclick="saveLead()" id="header-save-btn">Save</button>
         <button class="sheet-close" onclick="closeSheet()">✕</button>
@@ -597,6 +626,46 @@
           </div>
         </div>
 
+        <div class="section-label">🚩 Flags</div>
+        <div class="flags-grid">
+          <div class="flag-row" id="flag-podcast" onclick="toggleFlag('podcast')">
+            <div class="flag-toggle-row">
+              <div>
+                <div class="flag-label">🎙️ Potential Podcast Guest</div>
+                <div class="flag-sub">Flag for "Why Does It Feel So Wrong To Be Human At Work?"</div>
+              </div>
+              <div class="flag-toggle"></div>
+            </div>
+            <div class="flag-topic podcast-topic" id="flag-podcast-topic">
+              <input type="text" id="f-podcast-topic" placeholder="Topic or theme idea…" onclick="event.stopPropagation()" autocomplete="off">
+            </div>
+          </div>
+          <div class="flag-row" id="flag-partner" onclick="toggleFlag('partner')">
+            <div class="flag-toggle-row">
+              <div>
+                <div class="flag-label">🤝 Potential Partner Company</div>
+                <div class="flag-sub">Flag for a potential business partnership</div>
+              </div>
+              <div class="flag-toggle"></div>
+            </div>
+            <div class="flag-topic partner-topic" id="flag-partner-topic">
+              <input type="text" id="f-partner-topic" placeholder="Partnership idea or context…" onclick="event.stopPropagation()" autocomplete="off">
+            </div>
+          </div>
+          <div class="flag-row" id="flag-talent" onclick="toggleFlag('talent')">
+            <div class="flag-toggle-row">
+              <div>
+                <div class="flag-label">⭐ Potential Contractor / Employee</div>
+                <div class="flag-sub">Flag as a talent lead for the LW team</div>
+              </div>
+              <div class="flag-toggle"></div>
+            </div>
+            <div class="flag-topic talent-topic" id="flag-talent-topic">
+              <input type="text" id="f-talent-topic" placeholder="Role idea or notes…" onclick="event.stopPropagation()" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
         <div class="section-label">📸 Photo Status</div>
         <div class="photo-status-selector" id="photo-status-selector">
           <button class="ps-option" data-val="" onclick="setPhotoStatus('')">None</button>
@@ -619,7 +688,6 @@
       </div>
 
       <button class="btn-primary" onclick="saveLead()" id="save-btn">Save Lead</button>
-      <button class="btn-danger" id="delete-btn" onclick="deleteLead()" style="display:none">Delete Lead</button>
     </div>
   </div>
 </div>
@@ -664,6 +732,7 @@ let currentTemp = '';
 let currentMaturityTaken = false;
 let currentFileLinks = [];
 let currentPhotoStatus = '';
+let currentFlags = { podcast: false, partner: false, talent: false };
 let activeTab = 'capture';
 let detailsOpen = false;
 let currentEventFilter = 'all';
@@ -826,7 +895,7 @@ function renderLeads() {
   );
   // Apply filters
   if (activeFilters.assigned) filtered = filtered.filter(l => l.assignee === activeFilters.assigned);
-  if (activeFilters.created)  filtered = filtered.filter(l => l.added_by === activeFilters.created);
+  if (activeFilters.created)  filtered = filtered.filter(l => (l.added_by||'').toLowerCase().startsWith(activeFilters.created.toLowerCase()));
   if (activeFilters.stage)    filtered = filtered.filter(l => (l.actions||{})[activeFilters.stage]);
   if (activeFilters.maturity) filtered = filtered.filter(l => l.maturity_taken || (l.actions||{}).maturity_assessed);
   // Show count if any filter active
@@ -864,7 +933,7 @@ function renderLeads() {
           </div>
         </div>
         ${l.notes ? `<div class="lead-notes-preview">${l.notes}</div>` : ''}
-        ${(doneActions.length||l.photo_status) ? `<div class="card-actions">${photoStatusBadge}${doneActions.map(a => `<span class="action-pill ap-done">✓ ${a.label}</span>`).join('')}</div>` : ''}
+        ${(doneActions.length||l.photo_status||l.flag_podcast||l.flag_partner||l.flag_talent) ? `<div class="card-actions">${photoStatusBadge}${l.flag_podcast?'<span class="flag-badge fb-podcast">🎙️ Podcast Guest</span>':''}${l.flag_partner?'<span class="flag-badge fb-partner">🤝 Partner</span>':''}${l.flag_talent?'<span class="flag-badge fb-talent">⭐ Talent</span>':''}${doneActions.map(a => `<span class="action-pill ap-done">✓ ${a.label}</span>`).join('')}</div>` : ''}
       </div>`;
   }).join('');
 }
@@ -1070,10 +1139,11 @@ function openNewLead() {
   currentMaturityTaken = false;
   currentFileLinks = [];
   currentPhotoStatus = '';
+  currentFlags = { podcast: false, partner: false, talent: false };
   closeDetails();
   document.getElementById('sheet-title').textContent = 'New Lead';
   document.getElementById('delete-btn').style.display = 'none';
-  ['name','company','title','notes','linkedin','email','phone','city','state','challenges','opportunities','log-entry','maturity-url','file-url']
+  ['name','company','title','notes','linkedin','email','phone','city','state','challenges','opportunities','log-entry','maturity-url','file-url','podcast-topic','partner-topic','talent-topic']
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value = ''; });
   const emp = document.getElementById('f-employees'); if(emp) emp.value = '';
   document.getElementById('log-list').innerHTML = '';
@@ -1082,6 +1152,7 @@ function openNewLead() {
   renderMaturity();
   renderFileLinks();
   renderPhotoStatusSelector();
+  renderFlags();
   refreshUrlBtns();
   populateEventDropdown(currentEventFilter !== 'all' ? currentEventFilter : null);
   document.getElementById('lead-overlay').classList.add('open');
@@ -1097,6 +1168,14 @@ function openEditLead(id) {
   currentMaturityTaken = !!l.maturity_taken;
   currentFileLinks = [...(l.file_links || [])];
   currentPhotoStatus = l.photo_status || '';
+  currentFlags = {
+    podcast: !!l.flag_podcast,
+    partner: !!l.flag_partner,
+    talent:  !!l.flag_talent,
+  };
+  document.getElementById('f-podcast-topic').value = l.podcast_topic || '';
+  document.getElementById('f-partner-topic').value = l.partner_topic || '';
+  document.getElementById('f-talent-topic').value  = l.talent_topic  || '';
   document.getElementById('sheet-title').textContent = 'Edit Lead';
   document.getElementById('delete-btn').style.display = 'block';
   document.getElementById('f-name').value = l.name||'';
@@ -1132,6 +1211,7 @@ function openEditLead(id) {
   renderMaturity();
   renderFileLinks();
   renderPhotoStatusSelector();
+  renderFlags();
   refreshUrlBtns();
   populateEventDropdown(l.event_id);
   const hasDetails = l.linkedin||l.email||l.phone||l.challenges||l.opportunities||l.temperature||l.assignee
@@ -1232,6 +1312,12 @@ async function saveLead() {
     maturity_url: document.getElementById('f-maturity-url').value.trim() || null,
     file_links: currentFileLinks.length ? currentFileLinks : null,
     photo_status: currentPhotoStatus || null,
+    flag_podcast: currentFlags.podcast || false,
+    podcast_topic: currentFlags.podcast ? document.getElementById('f-podcast-topic').value.trim() || null : null,
+    flag_partner: currentFlags.partner || false,
+    partner_topic: currentFlags.partner ? document.getElementById('f-partner-topic').value.trim() || null : null,
+    flag_talent: currentFlags.talent || false,
+    talent_topic: currentFlags.talent ? document.getElementById('f-talent-topic').value.trim() || null : null,
   };
 
   try {
@@ -1381,6 +1467,41 @@ async function quickAssign(name) {
   await supabaseClient.from('leads').update({ assignee: name || null }).eq('id', id);
   renderCurrent();
   showToast(name ? `Assigned to ${name} ✓` : 'Unassigned ✓');
+}
+
+// ── FLAGS ──
+async function toggleFlag(key) {
+  currentFlags[key] = !currentFlags[key];
+  renderFlags();
+  if (currentEditId) await autoSaveFlags();
+}
+
+async function autoSaveFlags() {
+  await supabaseClient.from('leads').update({
+    flag_podcast: currentFlags.podcast,
+    podcast_topic: currentFlags.podcast ? document.getElementById('f-podcast-topic').value.trim() || null : null,
+    flag_partner: currentFlags.partner,
+    partner_topic: currentFlags.partner ? document.getElementById('f-partner-topic').value.trim() || null : null,
+    flag_talent: currentFlags.talent,
+    talent_topic: currentFlags.talent ? document.getElementById('f-talent-topic').value.trim() || null : null,
+  }).eq('id', currentEditId);
+  const lead = leads.find(l => l.id === currentEditId);
+  if (lead) {
+    lead.flag_podcast = currentFlags.podcast;
+    lead.flag_partner = currentFlags.partner;
+    lead.flag_talent  = currentFlags.talent;
+  }
+  showToast('Saved ✓');
+  renderCurrent();
+}
+
+function renderFlags() {
+  ['podcast','partner','talent'].forEach(key => {
+    const row = document.getElementById('flag-' + key);
+    const topic = document.getElementById('flag-' + key + '-topic');
+    row.className = 'flag-row' + (currentFlags[key] ? ' active-' + key : '');
+    topic.className = topic.className.replace(' show','') + (currentFlags[key] ? ' show' : '');
+  });
 }
 
 // ── PHOTO STATUS ──
