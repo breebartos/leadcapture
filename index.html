@@ -109,6 +109,9 @@
   .header-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .delete-icon-btn { background: none; border: none; font-size: 16px; cursor: pointer; opacity: 0.35; padding: 2px 4px; border-radius: 6px; transition: opacity 0.15s; }
   .delete-icon-btn:hover, .delete-icon-btn:active { opacity: 0.8; }
+  .nav-arrow-btn { background: var(--cream); border: 1.5px solid var(--border); width: 30px; height: 30px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; transition: all 0.12s; padding: 0; }
+  .nav-arrow-btn:hover { border-color: var(--lw-pink); color: var(--lw-pink); }
+  .nav-arrow-btn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
   .sheet-close { background: var(--cream); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); }
   .sheet-body { padding: 16px 18px 36px; }
 
@@ -271,6 +274,17 @@
   .filter-count { font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; flex-shrink: 0; align-self: center; }
   .quick-assign-btn { background: rgba(120,18,80,0.08); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0; color: var(--lw-plum); }
   .quick-assign-btn:active { background: rgba(120,18,80,0.18); }
+  /* CARD QUICK BUTTONS */
+  .card-quick-btns { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .card-quick-btn { border: 1.5px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; background: white; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; text-decoration: none; transition: all 0.12s; }
+  .card-quick-btn.linkedin-btn { border-color: #0a66c2; color: #0a66c2; }
+  .card-quick-btn.linkedin-btn:hover { background: #e8f0fb; }
+  .card-quick-btn.photo-btn:hover { background: var(--cream); }
+  .photo-quick-popover { position: fixed; background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 500; min-width: 175px; display: none; }
+  .photo-quick-popover.open { display: block; }
+  .photo-quick-opt { display: block; width: 100%; text-align: left; background: none; border: none; padding: 7px 12px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; border-radius: 8px; white-space: nowrap; }
+  .photo-quick-opt:hover { background: var(--cream); }
+  .photo-quick-opt.current { font-weight: 700; color: var(--lw-pink); }
   .assign-popover { position: fixed; background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 500; min-width: 160px; display: none; }
   .assign-popover.open { display: block; }
   .assign-popover-name { display: block; width: 100%; text-align: left; background: none; border: none; padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; border-radius: 8px; }
@@ -306,11 +320,13 @@
   .photo-status-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
   .ps-option { flex: 1; min-width: 80px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 5px; text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; color: var(--muted); background: white; transition: all 0.12s; white-space: nowrap; }
   .ps-option.sel { border-color: var(--lw-pink); background: #fde8f2; color: var(--lw-pink); }
+  .ps-option.sel-none_taken { border-color: #888; background: #f0f0f0; color: #555; }
   .ps-option.sel-raw { border-color: #ea8c00; background: #fff3e0; color: #ea8c00; }
   .ps-option.sel-editing { border-color: var(--lw-blue); background: #e6f6fc; color: var(--lw-blue); }
   .ps-option.sel-ready { border-color: var(--lw-plum); background: #f0e6fc; color: var(--lw-plum); }
   .ps-option.sel-sent { border-color: #1a9e5a; background: #e8f7ee; color: #1a9e5a; }
   .photo-status-card-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+  .psb-none    { background: #f0f0f0; color: #555; }
   .psb-raw     { background: #fff3e0; color: #ea8c00; }
   .psb-editing { background: #e6f6fc; color: var(--lw-blue); }
   .psb-ready   { background: #f0e6fc; color: var(--lw-plum); }
@@ -482,6 +498,7 @@
 
 <div class="toast" id="toast"></div>
 <div class="assign-popover" id="assign-popover"></div>
+<div class="photo-quick-popover" id="photo-quick-popover"></div>
 
 <!-- LEAD SHEET -->
 <div class="overlay" id="lead-overlay" onclick="handleOverlayClick(event)">
@@ -492,7 +509,9 @@
         <span class="sheet-title" id="sheet-title">New Lead</span>
         <button class="delete-icon-btn" id="delete-btn" onclick="deleteLead()" style="display:none" title="Delete lead">🗑</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="nav-arrow-btn" id="nav-prev" onclick="navigateLead(-1)" title="Previous lead">‹</button>
+        <button class="nav-arrow-btn" id="nav-next" onclick="navigateLead(1)" title="Next lead">›</button>
         <button class="header-save-btn" onclick="saveLead()" id="header-save-btn">Save</button>
         <button class="sheet-close" onclick="closeSheet()">✕</button>
       </div>
@@ -905,6 +924,7 @@ function renderLeads() {
   else { countEl.style.display = 'none'; }
   if (!filtered.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
+  currentLeadList = filtered.map(l => l.id);
   list.innerHTML = filtered.map(l => {
     const acts = l.actions || {};
     const doneActions = ACTIONS.filter(a => acts[a.key]);
@@ -934,6 +954,10 @@ function renderLeads() {
         </div>
         ${l.notes ? `<div class="lead-notes-preview">${l.notes}</div>` : ''}
         ${(doneActions.length||l.photo_status||l.flag_podcast||l.flag_partner||l.flag_talent) ? `<div class="card-actions">${photoStatusBadge}${l.flag_podcast?'<span class="flag-badge fb-podcast">🎙️ Podcast Guest</span>':''}${l.flag_partner?'<span class="flag-badge fb-partner">🤝 Partner</span>':''}${l.flag_talent?'<span class="flag-badge fb-talent">⭐ Talent</span>':''}${doneActions.map(a => `<span class="action-pill ap-done">✓ ${a.label}</span>`).join('')}</div>` : ''}
+        <div class="card-quick-btns">
+          ${l.linkedin ? `<a class="card-quick-btn linkedin-btn" href="${l.linkedin.startsWith('http')?l.linkedin:'https://'+l.linkedin}" target="_blank" rel="noopener" onclick="event.stopPropagation()">in LinkedIn</a>` : ''}
+          <button class="card-quick-btn photo-btn" onclick="event.stopPropagation();openPhotoQuickPopover(event,'${l.id}')">📷 ${l.photo_status ? photoStatusLabels[l.photo_status] : 'Photo Status'}</button>
+        </div>
       </div>`;
   }).join('');
 }
@@ -1156,6 +1180,8 @@ function openNewLead() {
   refreshUrlBtns();
   populateEventDropdown(currentEventFilter !== 'all' ? currentEventFilter : null);
   document.getElementById('lead-overlay').classList.add('open');
+  document.getElementById('nav-prev').style.display = 'none';
+  document.getElementById('nav-next').style.display = 'none';
   setTimeout(() => document.getElementById('f-name').focus(), 350);
 }
 
@@ -1218,6 +1244,7 @@ function openEditLead(id) {
     ||(l.actions&&Object.values(l.actions).some(Boolean))||(l.log&&l.log.length);
   if (hasDetails) openDetails(); else closeDetails();
   document.getElementById('lead-overlay').classList.add('open');
+  updateNavArrows();
 }
 
 function closeSheet() { document.getElementById('lead-overlay').classList.remove('open'); }
@@ -1431,6 +1458,84 @@ function toggleMaturityFilter() {
   activeFilters.maturity = !activeFilters.maturity;
   document.getElementById('filter-maturity-btn').classList.toggle('active', activeFilters.maturity);
   renderLeads();
+}
+
+// ── PREV/NEXT NAVIGATION ──
+let currentLeadList = [];
+
+function updateNavArrows() {
+  const prev = document.getElementById('nav-prev');
+  const next = document.getElementById('nav-next');
+  if (!currentEditId) { prev.style.display='none'; next.style.display='none'; return; }
+  prev.style.display=''; next.style.display='';
+  const idx = currentLeadList.indexOf(currentEditId);
+  prev.disabled = idx <= 0;
+  next.disabled = idx < 0 || idx >= currentLeadList.length - 1;
+}
+
+function navigateLead(dir) {
+  const idx = currentLeadList.indexOf(currentEditId);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= currentLeadList.length) return;
+  openEditLead(currentLeadList[newIdx]);
+  document.querySelector('.sheet-body')?.scrollTo(0, 0);
+}
+
+// ── PHOTO QUICK POPOVER ──
+let photoPopoverLeadId = null;
+
+function openPhotoQuickPopover(event, leadId) {
+  event.stopPropagation();
+  photoPopoverLeadId = leadId;
+  const lead = leads.find(l => l.id === leadId);
+  const current = lead ? lead.photo_status || '' : '';
+  const opts = [
+    ['', '— None'],
+    ['raw', '📷 Have Raw'],
+    ['editing', '✂️ Editing'],
+    ['ready', '✅ Ready to Send'],
+    ['sent', '📨 Sent'],
+  ];
+  const pop = document.getElementById('photo-quick-popover');
+  pop.innerHTML = opts.map(([val, label]) =>
+    `<button class="photo-quick-opt${current===val?' current':''}" onclick="quickSetPhotoStatus('${val}')">${label}</button>`
+  ).join('');
+
+  // Measure popover size before showing
+  pop.style.cssText = 'display:block;visibility:hidden;top:0;left:0;';
+  const popH = pop.offsetHeight;
+  const popW = pop.offsetWidth;
+
+  const rect = event.target.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+
+  // Flip above if not enough room below
+  const top = (spaceBelow < popH + 12) ? rect.top - popH - 6 : rect.bottom + 6;
+  let left = rect.left;
+  if (left + popW > window.innerWidth - 10) left = window.innerWidth - popW - 10;
+
+  pop.style.cssText = `top:${top}px;left:${Math.max(10,left)}px;`;
+  pop.classList.add('open');
+
+  setTimeout(() => document.addEventListener('click', closePhotoQuickPopover, {once:true}), 50);
+}
+
+function closePhotoQuickPopover() {
+  const pop = document.getElementById('photo-quick-popover');
+  pop.classList.remove('open');
+  pop.style.cssText = '';
+}
+
+async function quickSetPhotoStatus(val) {
+  closePhotoQuickPopover();
+  const id = photoPopoverLeadId;
+  if (!id) return;
+  const lead = leads.find(l => l.id === id);
+  if (!lead) return;
+  lead.photo_status = val || null;
+  await supabaseClient.from('leads').update({ photo_status: val || null }).eq('id', id);
+  renderCurrent();
+  showToast(val ? 'Photo status updated ✓' : 'Photo status cleared ✓');
 }
 
 // ── QUICK ASSIGN ──
